@@ -27,7 +27,7 @@ def ping():
 def run_flask():
     """Запускает Flask сервер на порту"""
     port = int(os.environ.get('PORT', 10000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host=''0.0.0.0', port=port, debug=False)
 
 # Настройка бота
 logging.basicConfig(
@@ -44,8 +44,8 @@ PDF_URL = "https://raw.githubusercontent.com/qypwznvm95-alt/autoprime-bot/main/c
 
 def create_keyboard():
     keyboard = [
-        [InlineKeyboardButton("📢 Подписаться на канал", callback_data="subscribe_channel")],
-        [InlineKeyboardButton("👥 Подписаться на группу", callback_data="subscribe_group")],
+        [InlineKeyboardButton("📢 Подписаться на канал", callback_data="https://t.me/autoprimechannel")],
+        [InlineKeyboardButton("👥 Подписаться на группу", callback_data="https://t.me/autoprimepro")],
         [InlineKeyboardButton("💬 Написать в WhatsApp", url="https://wa.me/79188999006")],
         [InlineKeyboardButton("✍️ Написать в Telegram", url="https://t.me/AUTOPRIMEmanager")],
         [InlineKeyboardButton("📥 ПОЛУЧИТЬ КАТАЛОГ PDF", callback_data="get_catalog")]
@@ -139,7 +139,7 @@ async def send_pdf_catalog(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 document=pdf_file,
                 filename="Каталог AUTOPRIME до 160 л.с..pdf",
                 caption="📋 <b>Каталог автомобилей до 160 л.с.</b>\n\n"
-                       "🚗 Более 50 моделей от ведущих брендов\n"
+                       "🚗 Проходные моделей от ведущих брендов\n"
                        "💰 Лучшие цены на рынке\n" 
                        "⚡ Быстрая доставка\n\n"
                        "📞 По всем вопросам:\n"
