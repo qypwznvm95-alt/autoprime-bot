@@ -14,6 +14,9 @@ logging.basicConfig(
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 ADMIN_CHAT_ID = os.getenv('ADMIN_CHAT_ID', '5533990703')
 
+# Прямая ссылка на PDF в GitHub
+PDF_URL = "https://raw.githubusercontent.com/ВАШ_ЛОГИН/autoprime-bot/main/catalog.pdf"
+
 def create_keyboard():
     keyboard = [
         [InlineKeyboardButton("📢 Подписаться на канал", callback_data="subscribe_channel")],
@@ -81,12 +84,18 @@ async def send_pdf_catalog(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode='HTML'
         )
 
-        # Отправляем ссылку на каталог
-        await context.bot.send_message(
+        # Отправляем PDF файл напрямую из GitHub
+        await context.bot.send_document(
             chat_id=user.id,
-            text="🔗 <b>Скачайте каталог по ссылке:</b>\n"
-                 "https://limewire.com/d/osmyF#QhnRQdtpRy\n\n"
-                 "Если ссылка не работает, напишите менеджеру: @AUTOPRIMEmanager",
+            document=PDF_URL,
+            filename="Каталог AUTOPRIME до 160 л.с..pdf",
+            caption="📋 <b>Каталог автомобилей до 160 л.с.</b>\n\n"
+                   "🚗 Проходные моделей от ведущих брендов\n"
+                   "💰 Лучшие цены на рынке\n" 
+                   "⚡ Быстрая доставка\n\n"
+                   "📞 По всем вопросам:\n"
+                   "• <a href='https://t.me/AUTOPRIMEmanager'>Telegram менеджер</a>\n"
+                   "• <a href='https://wa.me/79188999006'>WhatsApp менеджер</a>",
             parse_mode='HTML'
         )
         
@@ -99,21 +108,28 @@ async def send_pdf_catalog(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         
         notification = (
-            "📥 <b>ПОЛЬЗОВАТЕЛЬ ЗАПРОСИЛ КАТАЛОГ</b>\n\n"
+            "📥 <b>КАЧЕСТВЕННЫЙ ЛИД!</b>\n\n"
             f"{user_info}\n"
-            f"📲 <b>Действие:</b> Запросил каталог PDF\n\n"
+            f"📲 <b>Действие:</b> Скачал каталог PDF\n\n"
             f"💬 <b>Написать пользователю:</b>\n"
-            f"• <a href='tg://user?id={user.id}'>Написать в Telegram</a>"
+            f"• <a href='tg://user?id={user.id}'>Написать в Telegram</a>\n"
+            f"• <a href='https://wa.me/79188999006'>Перейти в WhatsApp</a>"
         )
         await send_admin_notification(context.application, notification)
         
-        print(f"✅ Каталог отправлен пользователю {user.first_name}")
+        print(f"✅ PDF каталог отправлен пользователю {user.first_name}")
 
     except Exception as e:
         print(f"❌ Ошибка отправки PDF: {e}")
+        
+        # Если не удалось отправить PDF, отправляем ссылку
         await context.bot.send_message(
             chat_id=user.id,
-            text="❌ Произошла ошибка. Напишите @AUTOPRIMEmanager"
+            text="❌ Не удалось отправить файл автоматически.\n\n"
+                 "🔗 <b>Скачайте каталог по ссылке:</b>\n"
+                 f"{PDF_URL}\n\n"
+                 "Если ссылка не работает, напишите менеджеру: @AUTOPRIMEmanager",
+            parse_mode='HTML'
         )
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -129,7 +145,27 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await send_pdf_catalog(update, context)
 
 async def catalog(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print(f"📋 Пользователь {update.effective_user.first_name} запросил каталог командой")
+    user = update.effective_user
+    print(f"📋 Пользователь {user.first_name} запросил каталог командой")
+    
+    # Уведомление о команде /catalog
+    user_info = (
+        f"👤 <b>{user.first_name or 'Не указано'}</b>\n"
+        f"🆔 ID: <code>{user.id}</code>\n"
+        f"📛 Username: @{user.username or 'Не указан'}\n"
+        f"🕐 Время: {datetime.now().strftime('%H:%M %d.%m.%Y')}"
+    )
+    
+    notification = (
+        "🔘 <b>КОМАНДА ОТ ПОЛЬЗОВАТЕЛЯ</b>\n\n"
+        f"{user_info}\n"
+        f"📲 <b>Действие:</b> Использовал команду /catalog\n\n"
+        f"💬 <b>Написать пользователю:</b>\n"
+        f"• <a href='tg://user?id={user.id}'>Написать в Telegram</a>\n"
+        f"• <a href='https://wa.me/79188999006'>Перейти в WhatsApp</a>"
+    )
+    await send_admin_notification(context.application, notification)
+    
     await send_pdf_catalog(update, context)
 
 def main():
@@ -143,6 +179,7 @@ def main():
         
         print("🤖 Бот AUTOPRIME запущен на Render!")
         print("📢 Система уведомлений активирована")
+        print(f"📁 PDF файл: {PDF_URL}")
         
         # Запускаем бота
         application.run_polling()
