@@ -39,13 +39,13 @@ logging.basicConfig(
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 ADMIN_CHAT_ID = os.getenv('ADMIN_CHAT_ID', '5533990703')
 
-# Прямая ссылка на PDF в GitHub (ЗАМЕНИТЕ НА ВАШУ)
+# Прямая ссылка на PDF в GitHub
 PDF_URL = "https://raw.githubusercontent.com/qypwznvm95-alt/autoprime-bot/main/catalog.pdf"
 
 def create_keyboard():
     keyboard = [
-        [InlineKeyboardButton("📢 Подписаться на канал", callback_data="https://t.me/autoprimechannel")],
-        [InlineKeyboardButton("👥 Подписаться на группу", callback_data="https://t.me/autoprimepro")],
+        [InlineKeyboardButton("📢 Подписаться на канал", url="https://t.me/autoprimechannel")],
+        [InlineKeyboardButton("👥 Подписаться на группу", url="https://t.me/autoprimepro")],
         [InlineKeyboardButton("💬 Написать в WhatsApp", url="https://wa.me/79188999006")],
         [InlineKeyboardButton("✍️ Написать в Telegram", url="https://t.me/AUTOPRIMEmanager")],
         [InlineKeyboardButton("📥 ПОЛУЧИТЬ КАТАЛОГ PDF", callback_data="get_catalog")]
@@ -206,7 +206,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     print(f"🔄 Пользователь {user.first_name} нажал кнопку: {button_data}")
     
-    if button_data in ["subscribe_channel", "subscribe_group", "get_catalog"]:
+    if button_data == "get_catalog":
         await send_pdf_catalog(update, context)
 
 async def catalog(update: Update, context: ContextTypes.DEFAULT_TYPE):
