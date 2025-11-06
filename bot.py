@@ -1,11 +1,13 @@
 import logging
 import os
+import requests
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 from datetime import datetime
 from flask import Flask
 from threading import Thread
 import time
+import io
 
 # Создаем Flask приложение для порта
 app = Flask(__name__)
@@ -62,6 +64,23 @@ async def send_admin_notification(application, message: str):
     except Exception as e:
         print(f"❌ Ошибка отправки уведомления админу: {e}")
 
+async def download_pdf():
+    """Скачивает PDF файл и возвращает его как bytes"""
+    try:
+        print(f"📥 Скачиваю PDF из: {PDF_URL}")
+        response = requests.get(PDF_URL, timeout=30)
+        
+        if response.status_code == 200:
+            print(f"✅ PDF скачан успешно, размер: {len(response.content)} байт")
+            return response.content
+        else:
+            print(f"❌ Ошибка скачивания: статус {response.status_code}")
+            return None
+            
+    except Exception as e:
+        print(f"❌ Ошибка при скачивании PDF: {e}")
+        return None
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     user_info = (
@@ -102,24 +121,48 @@ async def send_pdf_catalog(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         await context.bot.send_message(
             chat_id=user.id,
-            text="📥 <b>Спасибо! Отправляем каталог...</b>",
+            text="📥 <b>Спасибо! Скачиваем и отправляем каталог...</b>",
             parse_mode='HTML'
         )
 
-        await context.bot.send_document(
-            chat_id=user.id,
-            document=PDF_URL,
-            filename="Каталог AUTOPRIME до 160 л.с..pdf",
-            caption="📋 <b>Каталог автомобилей до 160 л.с.</b>\n\n"
-                   "🚗 Проходные модели от ведущих брендов\n"
-                   "💰 Лучшие цены на рынке\n" 
-                   "⚡ Быстрая доставка\n\n"
-                   "📞 По всем вопросам:\n"
-                   "• <a href='https://t.me/AUTOPRIMEmanager'>Telegram менеджер</a>\n"
-                   "• <a href='https://wa.me/79188999006'>WhatsApp менеджер</a>",
-            parse_mode='HTML'
-        )
+        # Скачиваем PDF файл
+        pdf_content = await download_pdf()
         
+        if pdf_content:
+            # Создаем файловый объект из байтов
+            pdf_file = io.BytesIO(pdf_content)
+            pdf_file.name = "Каталог AUTOPRIME до 160 л.с..pdf"
+            
+            # Отправляем PDF файл
+            await context.bot.send_document(
+                chat_id=user.id,
+                document=pdf_file,
+                filename="Каталог AUTOPRIME до 160 л.с..pdf",
+                caption="📋 <b>Каталог автомобилей до 160 л.с.</b>\n\n"
+                       "🚗 Более 50 моделей от ведущих брендов\n"
+                       "💰 Лучшие цены на рынке\n" 
+                       "⚡ Быстрая доставка\n\n"
+                       "📞 По всем вопросам:\n"
+                       "• <a href='https://t.me/AUTOPRIMEmanager'>Telegram менеджер</a>\n"
+                       "• <a href='https://wa.me/79188999006'>WhatsApp менеджер</a>",
+                parse_mode='HTML'
+            )
+            
+            print(f"✅ PDF файл успешно отправлен пользователю {user.first_name}")
+            
+        else:
+            # Если не удалось скачать PDF, отправляем ссылку как запасной вариант
+            await context.bot.send_message(
+                chat_id=user.id,
+                text="❌ <b>Не удалось отправить файл автоматически</b>\n\n"
+                     "🔗 <b>Скачайте каталог по ссылке:</b>\n"
+                     f"{PDF_URL}\n\n"
+                     "Если ссылка не работает, напишите менеджеру: @AUTOPRIMEmanager",
+                parse_mode='HTML'
+            )
+            print(f"⚠️ Отправлена ссылка вместо файла пользователю {user.first_name}")
+        
+        # Уведомление администратору
         user_info = (
             f"👤 <b>{user.first_name or 'Не указано'}</b>\n"
             f"🆔 ID: <code>{user.id}</code>\n"
@@ -127,26 +170,26 @@ async def send_pdf_catalog(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🕐 Время: {datetime.now().strftime('%H:%M %d.%m.%Y')}"
         )
         
+        action_type = "Скачал каталог PDF" if pdf_content else "Запросил каталог (отправлена ссылка)"
+        
         notification = (
-            "📥 <b>КАЧЕСТВЕННЫЙ ЛИД!</b>\n\n"
+            "📥 <b>ПОЛЬЗОВАТЕЛЬ ЗАПРОСИЛ КАТАЛОГ</b>\n\n"
             f"{user_info}\n"
-            f"📲 <b>Действие:</b> Скачал каталог PDF\n\n"
+            f"📲 <b>Действие:</b> {action_type}\n\n"
             f"💬 <b>Написать пользователю:</b>\n"
             f"• <a href='tg://user?id={user.id}'>Написать в Telegram</a>\n"
             f"• <a href='https://wa.me/79188999006'>Перейти в WhatsApp</a>"
         )
         await send_admin_notification(context.application, notification)
         
-        print(f"✅ PDF каталог отправлен пользователю {user.first_name}")
-
     except Exception as e:
         print(f"❌ Ошибка отправки PDF: {e}")
         await context.bot.send_message(
             chat_id=user.id,
-            text="❌ Не удалось отправить файл автоматически.\n\n"
-                 "🔗 <b>Скачайте каталог по ссылке:</b>\n"
-                 f"{PDF_URL}\n\n"
-                 "Если ссылка не работает, напишите менеджеру: @AUTOPRIMEmanager",
+            text="❌ Произошла ошибка при отправке каталога.\n\n"
+                 "📞 <b>Свяжитесь с менеджером:</b>\n"
+                 "• <a href='https://t.me/AUTOPRIMEmanager'>Telegram</a>\n"
+                 "• <a href='https://wa.me/79188999006'>WhatsApp</a>",
             parse_mode='HTML'
         )
 
