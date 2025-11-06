@@ -24,15 +24,15 @@ def create_keyboard():
     ]
     return InlineKeyboardMarkup(keyboard)
 
-async def send_admin_notification(context: ContextTypes.DEFAULT_TYPE, message: str):
+async def send_admin_notification(application, message: str):
     """Отправляет уведомление администратору"""
     try:
-        await context.bot.send_message(
+        await application.bot.send_message(
             chat_id=ADMIN_CHAT_ID,
             text=message,
             parse_mode='HTML'
         )
-        print(f"📢 Уведомление отправлено администратору")
+        print("📢 Уведомление отправлено администратору")
     except Exception as e:
         print(f"❌ Ошибка отправки уведомления админу: {e}")
 
@@ -67,7 +67,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"{user_info}\n"
         f"📲 <b>Действие:</b> Запустил бота"
     )
-    await send_admin_notification(context, notification)
+    await send_admin_notification(context.application, notification)
     
     print(f"👤 Пользователь {user.first_name} запустил бота")
 
@@ -81,7 +81,7 @@ async def send_pdf_catalog(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode='HTML'
         )
 
-        # Отправляем ссылку на каталог (временно, пока не загрузим PDF на хостинг)
+        # Отправляем ссылку на каталог
         await context.bot.send_message(
             chat_id=user.id,
             text="🔗 <b>Скачайте каталог по ссылке:</b>\n"
@@ -105,7 +105,7 @@ async def send_pdf_catalog(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"💬 <b>Написать пользователю:</b>\n"
             f"• <a href='tg://user?id={user.id}'>Написать в Telegram</a>"
         )
-        await send_admin_notification(context, notification)
+        await send_admin_notification(context.application, notification)
         
         print(f"✅ Каталог отправлен пользователю {user.first_name}")
 
@@ -133,14 +133,22 @@ async def catalog(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await send_pdf_catalog(update, context)
 
 def main():
-    application = Application.builder().token(BOT_TOKEN).build()
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("catalog", catalog))
-    application.add_handler(CallbackQueryHandler(button_handler))
+    print("✅ Бот запускается...")
     
-    print("✅ Бот AUTOPRIME запущен на Render!")
-    print("📢 Система уведомлений активирована")
-    application.run_polling()
+    try:
+        application = Application.builder().token(BOT_TOKEN).build()
+        application.add_handler(CommandHandler("start", start))
+        application.add_handler(CommandHandler("catalog", catalog))
+        application.add_handler(CallbackQueryHandler(button_handler))
+        
+        print("🤖 Бот AUTOPRIME запущен на Render!")
+        print("📢 Система уведомлений активирована")
+        
+        # Запускаем бота
+        application.run_polling()
+        
+    except Exception as e:
+        print(f"❌ Критическая ошибка: {e}")
 
 if __name__ == "__main__":
     main()
