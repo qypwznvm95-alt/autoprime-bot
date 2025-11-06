@@ -3,6 +3,29 @@ import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 from datetime import datetime
+from flask import Flask
+from threading import Thread
+import time
+
+# Создаем Flask приложение для порта
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "🤖 Бот AUTOPRIME работает! 🚗"
+
+@app.route('/health')
+def health():
+    return "OK", 200
+
+@app.route('/ping')
+def ping():
+    return "pong", 200
+
+def run_flask():
+    """Запускает Flask сервер на порту"""
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port, debug=False)
 
 # Настройка бота
 logging.basicConfig(
@@ -14,8 +37,8 @@ logging.basicConfig(
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 ADMIN_CHAT_ID = os.getenv('ADMIN_CHAT_ID', '5533990703')
 
-# Прямая ссылка на PDF в GitHub
-PDF_URL = "https://raw.githubusercontent.com/qypwznvm95-alt/autoprime-bot/main/catalog.pdf"
+# Прямая ссылка на PDF в GitHub (ЗАМЕНИТЕ НА ВАШУ)
+PDF_URL = "https://raw.githubusercontent.com/ВАШ_ЛОГИН/autoprime-bot/main/catalog.pdf"
 
 def create_keyboard():
     keyboard = [
@@ -64,7 +87,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode='HTML'
     )
     
-    # Уведомление администратору о запуске бота
     notification = (
         "🚀 <b>НОВЫЙ ПОЛЬЗОВАТЕЛЬ</b>\n\n"
         f"{user_info}\n"
@@ -84,13 +106,12 @@ async def send_pdf_catalog(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode='HTML'
         )
 
-        # Отправляем PDF файл напрямую из GitHub
         await context.bot.send_document(
             chat_id=user.id,
             document=PDF_URL,
             filename="Каталог AUTOPRIME до 160 л.с..pdf",
             caption="📋 <b>Каталог автомобилей до 160 л.с.</b>\n\n"
-                   "🚗 Проходные моделей от ведущих брендов\n"
+                   "🚗 Проходные модели от ведущих брендов\n"
                    "💰 Лучшие цены на рынке\n" 
                    "⚡ Быстрая доставка\n\n"
                    "📞 По всем вопросам:\n"
@@ -99,7 +120,6 @@ async def send_pdf_catalog(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode='HTML'
         )
         
-        # Уведомление администратору
         user_info = (
             f"👤 <b>{user.first_name or 'Не указано'}</b>\n"
             f"🆔 ID: <code>{user.id}</code>\n"
@@ -121,8 +141,6 @@ async def send_pdf_catalog(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except Exception as e:
         print(f"❌ Ошибка отправки PDF: {e}")
-        
-        # Если не удалось отправить PDF, отправляем ссылку
         await context.bot.send_message(
             chat_id=user.id,
             text="❌ Не удалось отправить файл автоматически.\n\n"
@@ -148,7 +166,6 @@ async def catalog(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     print(f"📋 Пользователь {user.first_name} запросил каталог командой")
     
-    # Уведомление о команде /catalog
     user_info = (
         f"👤 <b>{user.first_name or 'Не указано'}</b>\n"
         f"🆔 ID: <code>{user.id}</code>\n"
@@ -168,7 +185,8 @@ async def catalog(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await send_pdf_catalog(update, context)
 
-def main():
+def run_bot():
+    """Запускает Telegram бота"""
     print("✅ Бот запускается...")
     
     try:
@@ -181,11 +199,20 @@ def main():
         print("📢 Система уведомлений активирована")
         print(f"📁 PDF файл: {PDF_URL}")
         
-        # Запускаем бота
         application.run_polling()
         
     except Exception as e:
-        print(f"❌ Критическая ошибка: {e}")
+        print(f"❌ Критическая ошибка бота: {e}")
 
 if __name__ == "__main__":
-    main()
+    # Запускаем Flask в отдельном потоке
+    flask_thread = Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+    
+    print("🌐 Flask сервер запущен на порту 10000")
+    
+    # Даем Flask время запуститься
+    time.sleep(2)
+    
+    # Запускаем бота
+    run_bot()
