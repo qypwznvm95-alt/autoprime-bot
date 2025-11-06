@@ -27,7 +27,7 @@ def ping():
 def run_flask():
     """Запускает Flask сервер на порту"""
     port = int(os.environ.get('PORT', 10000))
-    app.run(host=''0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=port, debug=False)
 
 # Настройка бота
 logging.basicConfig(
@@ -39,8 +39,8 @@ logging.basicConfig(
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 ADMIN_CHAT_ID = os.getenv('ADMIN_CHAT_ID', '5533990703')
 
-# Прямая ссылка на PDF в GitHub (qypwznvm95-alt)
-PDF_URL = "https://raw.githubusercontent.com/qypwznvm95-alt/autoprime-bot/main/catalog.pdf"
+# Прямая ссылка на PDF в GitHub (ЗАМЕНИТЕ НА ВАШУ)
+PDF_URL = "https://raw.githubusercontent.com/ВАШ_ЛОГИН/autoprime-bot/main/catalog.pdf"
 
 def create_keyboard():
     keyboard = [
@@ -63,6 +63,10 @@ async def send_admin_notification(application, message: str):
         print("📢 Уведомление отправлено администратору")
     except Exception as e:
         print(f"❌ Ошибка отправки уведомления админу: {e}")
+
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
+    """Обрабатывает все ошибки"""
+    print(f"⚠️ Ошибка: {context.error}")
 
 async def download_pdf():
     """Скачивает PDF файл и возвращает его как bytes"""
@@ -139,7 +143,7 @@ async def send_pdf_catalog(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 document=pdf_file,
                 filename="Каталог AUTOPRIME до 160 л.с..pdf",
                 caption="📋 <b>Каталог автомобилей до 160 л.с.</b>\n\n"
-                       "🚗 Проходные моделей от ведущих брендов\n"
+                       "🚗 Более 50 моделей от ведущих брендов\n"
                        "💰 Лучшие цены на рынке\n" 
                        "⚡ Быстрая доставка\n\n"
                        "📞 По всем вопросам:\n"
@@ -233,7 +237,11 @@ def run_bot():
     print("✅ Бот запускается...")
     
     try:
+        # Создаем приложение и сразу добавляем обработчик ошибок
         application = Application.builder().token(BOT_TOKEN).build()
+        application.add_error_handler(error_handler)
+        
+        # Затем добавляем остальные обработчики
         application.add_handler(CommandHandler("start", start))
         application.add_handler(CommandHandler("catalog", catalog))
         application.add_handler(CallbackQueryHandler(button_handler))
