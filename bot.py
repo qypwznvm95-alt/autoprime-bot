@@ -39,7 +39,7 @@ logging.basicConfig(
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 ADMIN_CHAT_ID = os.getenv('ADMIN_CHAT_ID', '5533990703')
 
-# Прямая ссылка на PDF в GitHub (ЗАМЕНИТЕ НА ВАШУ)
+# Прямая ссылка на PDF в GitHub (qypwznvm95-alt)
 PDF_URL = "https://raw.githubusercontent.com/qypwznvm95-alt/autoprime-bot/main/catalog.pdf"
 
 def create_keyboard():
